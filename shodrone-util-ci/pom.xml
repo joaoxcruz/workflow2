@@ -20,10 +20,12 @@
 
     <properties>
         <aggregate.report.dir>${project.build.directory}/site/jacoco-aggregate</aggregate.report.dir>
+        <!-- Default skip property (can be overridden by profile if needed) -->
         <jacoco.skip.merge>false</jacoco.skip.merge>
     </properties>
 
     <dependencies>
+        <!-- Dependencies on all *Java* modules producing code/tests -->
         <dependency>
             <groupId>lapr4</groupId>
             <artifactId>shodrone-domain</artifactId>
@@ -73,8 +75,10 @@
                                 <fileSet>
                                     <directory>${project.parent.basedir}</directory>
                                     <includes>
+                                        <!-- *** Correct includes based on existing tests *** -->
                                         <include>shodrone-domain/target/jacoco.exec</include>
                                         <include>shodrone-backoffice/shodrone-backoffice-app/target/jacoco.exec</include>
+                                        <!-- Do NOT include db, dsl, dronelang, showproposal yet -->
                                     </includes>
                                     <excludes>
                                         <exclude>${project.artifactId}/target/jacoco.exec</exclude>
@@ -82,6 +86,7 @@
                                     </excludes>
                                 </fileSet>
                             </fileSets>
+                            <!-- Keep skip property for flexibility, but default is false -->
                             <skip>${jacoco.skip.merge}</skip>
                             <destFile>${project.build.directory}/aggregate.exec</destFile>
                         </configuration>
@@ -100,6 +105,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-clean-plugin</artifactId>
+                <!-- Version managed by parent -->
                 <configuration>
                     <filesets>
                         <fileset>
@@ -121,6 +127,7 @@
         </plugins>
     </build>
 
+    <!-- Profile to override the default skip value if needed for debugging -->
     <profiles>
         <profile>
             <id>skipJaCoCoMerge</id>

@@ -1,4 +1,4 @@
-name: Java CI with Maven (Debug JaCoCo Merge)
+name: Java CI with Maven
 
 on:
   push:
@@ -24,25 +24,20 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # Run verify, but activate the profile to SKIP the merge goal
-      - name: Build, Test, and Verify with Maven (Skip JaCoCo Merge)
-        run: mvn -B verify -PskipJaCoCoMerge
+      # *** Run standard verify without skipping the merge goal ***
+      - name: Build, Test, and Verify with Maven
+        run: mvn -B verify
 
-      # ---- More Detailed Diagnostic Step ----
+      # Optional but helpful diagnostic step if things break later
       - name: Check for jacoco.exec files AFTER verify
-        if: always() # Run even if verify failed
+        if: failure() # Only run if verify fails, to see what might be missing
         run: |
           echo "--- Checking for jacoco.exec files ---"
-          # Use find with -ls to show details including timestamp and size
           find . -path '*/target/jacoco.exec' -ls
-          echo "--- If no files are listed above, no jacoco.exec was generated! ---"
-          echo "--- Checking target directories existence ---"
-          ls -ld */target shodrone-backoffice/*/target # List target dirs
           echo "--- Finished checking ---"
-      # ---- END DIAGNOSTIC STEP ----
 
       - name: Upload Unit Test Results (Surefire)
-        if: always()
+        if: always() # Upload test results even if build fails
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
@@ -50,10 +45,9 @@ jobs:
           retention-days: 7
 
       - name: Upload Code Coverage Report (Jacoco Aggregate)
-        # report-aggregate should still work even if merge was skipped
-        if: success()
+        if: success() # Only upload coverage if build succeeds
         uses: actions/upload-artifact@v4
         with:
-          name: jacoco-aggregate-report
+          name: jacoco-code-coverage-report
           path: shodrone-util-ci/target/site/jacoco-aggregate/
           retention-days: 7
