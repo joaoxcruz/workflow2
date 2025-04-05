@@ -20,7 +20,6 @@
 
     <properties>
         <aggregate.report.dir>${project.build.directory}/site/jacoco-aggregate</aggregate.report.dir>
-        <!-- Default skip property (can be overridden by profile if needed) -->
         <jacoco.skip.merge>false</jacoco.skip.merge>
     </properties>
 
@@ -73,20 +72,20 @@
                         <configuration>
                             <fileSets>
                                 <fileSet>
-                                    <directory>${project.parent.basedir}</directory>
+                                    <!-- *** CHANGE HERE: Use relative path *** -->
+                                    <directory>../</directory>
                                     <includes>
-                                        <!-- *** Correct includes based on existing tests *** -->
+                                        <!-- Keep includes relative to the new directory setting -->
                                         <include>shodrone-domain/target/jacoco.exec</include>
                                         <include>shodrone-backoffice/shodrone-backoffice-app/target/jacoco.exec</include>
-                                        <!-- Do NOT include db, dsl, dronelang, showproposal yet -->
+                                        <!-- Only include others if they generate .exec files -->
                                     </includes>
                                     <excludes>
-                                        <exclude>${project.artifactId}/target/jacoco.exec</exclude>
+                                        <!-- Excludes should still work relative to ../ -->
                                         <exclude>shodrone-util-ci/target/jacoco.exec</exclude>
                                     </excludes>
                                 </fileSet>
                             </fileSets>
-                            <!-- Keep skip property for flexibility, but default is false -->
                             <skip>${jacoco.skip.merge}</skip>
                             <destFile>${project.build.directory}/aggregate.exec</destFile>
                         </configuration>
