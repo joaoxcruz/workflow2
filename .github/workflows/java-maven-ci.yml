@@ -1,4 +1,4 @@
-name: Java CI with Maven
+name: Java CI with Maven (JaCoCo Diagnostics)
 
 on:
   push:
@@ -24,30 +24,46 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      # *** Run standard verify without skipping the merge goal ***
+      # Run verify with error output enabled to catch Surefire/Test issues
       - name: Build, Test, and Verify with Maven
-        run: mvn -B verify
+        # Use -e to print full stack trace on error
+        # Run without the skip profile to attempt the merge
+        run: mvn -B verify -e
 
-      # Optional but helpful diagnostic step if things break later
-      - name: Check for jacoco.exec files AFTER verify
-        if: failure() # Only run if verify fails, to see what might be missing
+      # ---- DETAILED DIAGNOSTIC STEP ----
+      - name: Check for jacoco.exec files and Test Reports AFTER verify
+        if: always() # Run regardless of verify success/failure
         run: |
-          echo "--- Checking for jacoco.exec files ---"
-          find . -path '*/target/jacoco.exec' -ls
-          echo "--- Finished checking ---"
+          echo "--- Detailed check START ---"
+          echo ""
+          echo ">>> Listing ALL target directories:"
+          ls -d */target/ shodrone-backoffice/*/target/ || echo "No target dirs found?"
+          echo ""
+          echo ">>> Searching for jacoco.exec files:"
+          find . -path '*/target/jacoco.exec' -exec ls -l {} \; || echo "No jacoco.exec files found."
+          echo ""
+          echo ">>> Searching for Surefire XML reports:"
+          find . -path '*/target/surefire-reports/*.xml' -exec ls -l {} \; || echo "No Surefire reports found."
+          echo ""
+          # Optionally, show the content of Surefire reports if few/small
+          # find . -path '*/target/surefire-reports/*.xml' -exec echo "Content of {}:" \; -exec cat {} \; -exec echo "" \;
+          echo "--- Detailed check END ---"
+      # ---- END DIAGNOSTIC STEP ----
 
       - name: Upload Unit Test Results (Surefire)
-        if: always() # Upload test results even if build fails
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
-          path: '**/target/surefire-reports/*.xml'
-          retention-days: 7
+          # Double-check if reports exist before uploading
+          path: |
+            **/target/surefire-reports/*.xml
+          if-no-files-found: warn # Don't fail the workflow if reports are missing, just warn
 
       - name: Upload Code Coverage Report (Jacoco Aggregate)
-        if: success() # Only upload coverage if build succeeds
+        if: success() # Only upload if verify succeeded (meaning merge/report worked)
         uses: actions/upload-artifact@v4
         with:
-          name: jacoco-code-coverage-report
+          name: jacoco-aggregate-report
           path: shodrone-util-ci/target/site/jacoco-aggregate/
-          retention-days: 7
+          if-no-files-found: fail # Fail if the report wasn't generated on success
